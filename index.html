@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestLite Pilot</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 5px 5px 0 0;
+            transition: background 0.2s;
+        }
+
+        .tab:hover {
+            background: #d0d0d0;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .view {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        button.success {
+            background: #27ae60;
+        }
+
+        button.success:hover {
+            background: #219a52;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Chat View */
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            min-height: 60px;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-message {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .chat-message-content {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .chat-message-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .chat-message-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-message-actions button {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        /* Idea View */
+        .idea-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ideas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .idea-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+
+        .idea-card:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .idea-card.pinned {
+            border-color: #f39c12;
+            background: #fffbf0;
+        }
+
+        .idea-card.archived {
+            opacity: 0.6;
+            background: #f0f0f0;
+        }
+
+        .idea-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .idea-card-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .idea-card-title[contenteditable]:focus {
+            outline: 2px solid #3498db;
+            border-radius: 3px;
+        }
+
+        .idea-card-content {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+        }
+
+        .idea-card-content[contenteditable]:focus {
+            outline: 2px solid #3498db;
+            border-radius: 3px;
+        }
+
+        .idea-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            background: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .idea-card-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .idea-card-actions button {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .idea-card-checkbox {
+            margin-right: 10px;
+        }
+
+        /* Note View */
+        .note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .note-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .note-item-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .note-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .note-editor {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .note-editor h3 {
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .idea-selection {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .idea-option {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .idea-option:last-child {
+            border-bottom: none;
+        }
+
+        .idea-option input {
+            margin-right: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .header-actions {
+                flex-direction: column;
+            }
+
+            .chat-input-area {
+                flex-direction: column;
+            }
+
+            .ideas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🪺 NestLite Pilot</h1>
+            <div class="header-actions">
+                <button onclick="app.newProject()">新規作成</button>
+                <button class="success" onclick="app.saveData()">保存 (.nestlite)</button>
+                <div class="file-input-wrapper">
+                    <button class="secondary">読込 (.nestlite)</button>
+                    <input type="file" accept=".nestlite,.json" onchange="app.loadData(this)">
+                </div>
+                <button onclick="app.exportMarkdown()">Markdown エクスポート</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="app.switchTab('chat')">💬 Chat</button>
+            <button class="tab" onclick="app.switchTab('idea')">💡 Idea</button>
+            <button class="tab" onclick="app.switchTab('note')">📝 Note</button>
+        </div>
+
+        <!-- Chat View -->
+        <div id="chat-view" class="view active">
+            <div class="chat-input-area">
+                <textarea id="chat-input" placeholder="メッセージを入力...（Ctrl+Enter で送信）"></textarea>
+                <button onclick="app.addChatMessage()">送信</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <!-- Messages will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Idea View -->
+        <div id="idea-view" class="view">
+            <div class="idea-controls">
+                <button onclick="app.showIdeaModal()">＋ カード追加</button>
+                <button onclick="app.createNoteFromSelectedIdeas()">選択したカードでノート作成</button>
+                <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="show-archived-ideas" onchange="app.renderIdeas()"> アーカイブ表示
+                </label>
+            </div>
+            <div id="ideas-grid" class="ideas-grid">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Note View -->
+        <div id="note-view" class="view">
+            <button onclick="app.showNoteEditor()" style="margin-bottom: 20px;">＋ ノート作成</button>
+            <div id="note-list" class="note-list">
+                <!-- Notes will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Idea Modal -->
+    <div id="idea-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Idea カード作成</h2>
+                <button class="modal-close" onclick="app.closeIdeaModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>タイトル</label>
+                <input type="text" id="idea-title-input" placeholder="カードのタイトル">
+            </div>
+            <div class="form-group">
+                <label>内容</label>
+                <textarea id="idea-content-input" placeholder="カードの内容"></textarea>
+            </div>
+            <div class="form-group">
+                <label>タグ（カンマ区切り）</label>
+                <input type="text" id="idea-tags-input" placeholder="タグ 1, タグ 2, タグ 3">
+            </div>
+            <button onclick="app.saveIdeaCard()">作成</button>
+        </div>
+    </div>
+
+    <!-- Note Editor Modal -->
+    <div id="note-editor-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="note-editor-title">ノート編集</h2>
+                <button class="modal-close" onclick="app.closeNoteEditor()">&times;</button>
+            </div>
+            <input type="hidden" id="note-id-input">
+            <div class="form-group">
+                <label>タイトル</label>
+                <input type="text" id="note-title-input" placeholder="ノートのタイトル">
+            </div>
+            <div class="form-group">
+                <label>本文（Markdown）</label>
+                <textarea id="note-content-input" placeholder="マークダウン形式で入力..." style="min-height: 300px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>関連付ける Idea カード</label>
+                <div id="note-idea-selection" class="idea-selection">
+                    <!-- Idea checkboxes will be rendered here -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>タグ（カンマ区切り）</label>
+                <input type="text" id="note-tags-input" placeholder="タグ 1, タグ 2, タグ 3">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="app.saveNote()">保存</button>
+                <button class="secondary" onclick="app.closeNoteEditor()">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NestLite Application
+        const app = (function() {
+            // Data structure
+            let data = {
+                version: "1.0.0",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                chats: [],
+                ideas: [],
+                notes: []
+            };
+
+            let currentNoteId = null;
+            let pendingIdeaData = null;
+
+            // Utility functions
+            function generateId(prefix) {
+                return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            }
+
+            function parseTags(tagString) {
+                if (!tagString || tagString.trim() === '') return [];
+                return tagString.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            }
+
+            // Tab switching
+            function switchTab(tabName) {
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+
+                event.target.classList.add('active');
+                document.getElementById(`${tabName}-view`).classList.add('active');
+
+                if (tabName === 'chat') renderChats();
+                if (tabName === 'idea') renderIdeas();
+                if (tabName === 'note') renderNotes();
+            }
+
+            // Chat functions
+            function addChatMessage() {
+                const input = document.getElementById('chat-input');
+                const content = input.value.trim();
+
+                if (!content) return;
+
+                const message = {
+                    id: generateId('chat'),
+                    role: 'user',
+                    content: content,
+                    timestamp: new Date().toISOString()
+                };
+
+                data.chats.push(message);
+                data.updatedAt = new Date().toISOString();
+                input.value = '';
+                renderChats();
+            }
+
+            function deleteChatMessage(chatId) {
+                if (!confirm('このメッセージを削除しますか？')) return;
+                data.chats = data.chats.filter(c => c.id !== chatId);
+                data.updatedAt = new Date().toISOString();
+                renderChats();
+            }
+
+            function createIdeaFromChat(chatId) {
+                const chat = data.chats.find(c => c.id === chatId);
+                if (!chat) return;
+
+                pendingIdeaData = {
+                    title: chat.content.substring(0, 50) + (chat.content.length > 50 ? '...' : ''),
+                    content: chat.content,
+                    tags: '',
+                    sourceChatId: chatId
+                };
+
+                showIdeaModal();
+            }
+
+            function renderChats() {
+                const container = document.getElementById('chat-messages');
+
+                if (data.chats.length === 0) {
+                    container.innerHTML = '<div class="empty-state">メッセージがありません。最初のアイデアを書き出してみましょう！</div>';
+                    return;
+                }
+
+                container.innerHTML = data.chats.map(chat => `
+                    <div class="chat-message">
+                        <div class="chat-message-content">${escapeHtml(chat.content)}</div>
+                        <div class="chat-message-meta">
+                            <span>${formatDate(chat.timestamp)}</span>
+                            <div class="chat-message-actions">
+                                <button onclick="app.createIdeaFromChat('${chat.id}')">カード化</button>
+                                <button class="danger" onclick="app.deleteChatMessage('${chat.id}')">削除</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Idea functions
+            function showIdeaModal() {
+                document.getElementById('idea-title-input').value = pendingIdeaData?.title || '';
+                document.getElementById('idea-content-input').value = pendingIdeaData?.content || '';
+                document.getElementById('idea-tags-input').value = pendingIdeaData?.tags || '';
+                document.getElementById('idea-modal').classList.add('active');
+            }
+
+            function closeIdeaModal() {
+                document.getElementById('idea-modal').classList.remove('active');
+                pendingIdeaData = null;
+            }
+
+            function saveIdeaCard() {
+                const title = document.getElementById('idea-title-input').value.trim();
+                const content = document.getElementById('idea-content-input').value.trim();
+                const tags = parseTags(document.getElementById('idea-tags-input').value);
+
+                if (!title && !content) {
+                    alert('タイトルまたは内容を入力してください');
+                    return;
+                }
+
+                const idea = {
+                    id: generateId('idea'),
+                    title: title,
+                    content: content,
+                    tags: tags,
+                    pinned: false,
+                    archived: false,
+                    sourceChatId: pendingIdeaData?.sourceChatId || null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                data.ideas.push(idea);
+                data.updatedAt = new Date().toISOString();
+                closeIdeaModal();
+                renderIdeas();
+            }
+
+            function updateIdeaCard(ideaId, field, value) {
+                const idea = data.ideas.find(i => i.id === ideaId);
+                if (!idea) return;
+
+                idea[field] = value;
+                idea.updatedAt = new Date().toISOString();
+                data.updatedAt = new Date().toISOString();
+            }
+
+            function toggleIdeaPin(ideaId) {
+                const idea = data.ideas.find(i => i.id === ideaId);
+                if (idea) {
+                    idea.pinned = !idea.pinned;
+                    idea.updatedAt = new Date().toISOString();
+                    renderIdeas();
+                }
+            }
+
+            function toggleIdeaArchive(ideaId) {
+                const idea = data.ideas.find(i => i.id === ideaId);
+                if (idea) {
+                    idea.archived = !idea.archived;
+                    idea.updatedAt = new Date().toISOString();
+                    renderIdeas();
+                }
+            }
+
+            function deleteIdeaCard(ideaId) {
+                if (!confirm('このカードを削除しますか？')) return;
+                data.ideas = data.ideas.filter(i => i.id !== ideaId);
+                data.updatedAt = new Date().toISOString();
+                renderIdeas();
+            }
+
+            function sendIdeaToNote(ideaId) {
+                currentNoteId = null;
+                document.getElementById('note-title-input').value = '';
+                document.getElementById('note-content-input').value = '';
+                document.getElementById('note-tags-input').value = '';
+
+                // Pre-select the idea
+                setTimeout(() => {
+                    const checkbox = document.querySelector(`input[name="note-idea-ids"][value="${ideaId}"]`);
+                    if (checkbox) checkbox.checked = true;
+                }, 100);
+
+                document.getElementById('note-editor-modal').classList.add('active');
+            }
+
+            function renderIdeas() {
+                const container = document.getElementById('ideas-grid');
+                const showArchived = document.getElementById('show-archived-ideas').checked;
+
+                let filteredIdeas = data.ideas;
+                if (!showArchived) {
+                    filteredIdeas = data.ideas.filter(i => !i.archived);
+                }
+
+                // Sort: pinned first, then by updated date
+                filteredIdeas.sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    return new Date(b.updatedAt) - new Date(a.updatedAt);
+                });
+
+                if (filteredIdeas.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Idea カードがありません。Chat から作成するか、直接追加しましょう！</div>';
+                    return;
+                }
+
+                container.innerHTML = filteredIdeas.map(idea => `
+                    <div class="idea-card ${idea.pinned ? 'pinned' : ''} ${idea.archived ? 'archived' : ''}" data-id="${idea.id}">
+                        <div class="idea-card-header">
+                            <span class="idea-card-checkbox">
+                                <input type="checkbox" class="idea-select-checkbox" value="${idea.id}">
+                            </span>
+                            <div class="idea-card-title" contenteditable="true"
+                                 onblur="app.updateIdeaCard('${idea.id}', 'title', this.innerText)">${escapeHtml(idea.title)}</div>
+                            ${idea.pinned ? '📌' : ''}
+                        </div>
+                        <div class="idea-card-content" contenteditable="true"
+                             onblur="app.updateIdeaCard('${idea.id}', 'content', this.innerText)">${escapeHtml(idea.content)}</div>
+                        <div class="idea-card-tags">
+                            ${idea.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                        <div class="idea-card-actions">
+                            <button onclick="app.toggleIdeaPin('${idea.id}')">${idea.pinned ? 'ピン留め解除' : 'ピン留め'}</button>
+                            <button onclick="app.toggleIdeaArchive('${idea.id}')">${idea.archived ? 'アーカイブ解除' : 'アーカイブ'}</button>
+                            <button onclick="app.sendIdeaToNote('${idea.id}')">Note に送る</button>
+                            <button class="danger" onclick="app.deleteIdeaCard('${idea.id}')">削除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function createNoteFromSelectedIdeas() {
+                const checkboxes = document.querySelectorAll('.idea-select-checkbox:checked');
+                if (checkboxes.length === 0) {
+                    alert('カードを選択してください');
+                    return;
+                }
+
+                const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+                currentNoteId = null;
+                document.getElementById('note-title-input').value = '';
+                document.getElementById('note-content-input').value = '';
+                document.getElementById('note-tags-input').value = '';
+
+                document.getElementById('note-editor-modal').classList.add('active');
+
+                setTimeout(() => {
+                    selectedIds.forEach(id => {
+                        const checkbox = document.querySelector(`input[name="note-idea-ids"][value="${id}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }, 100);
+            }
+
+            // Note functions
+            function showNoteEditor(noteId = null) {
+                currentNoteId = noteId;
+
+                if (noteId) {
+                    const note = data.notes.find(n => n.id === noteId);
+                    if (note) {
+                        document.getElementById('note-title-input').value = note.title;
+                        document.getElementById('note-content-input').value = note.content;
+                        document.getElementById('note-tags-input').value = note.tags.join(', ');
+                    }
+                } else {
+                    document.getElementById('note-title-input').value = '';
+                    document.getElementById('note-content-input').value = '';
+                    document.getElementById('note-tags-input').value = '';
+                }
+
+                // Render idea selection
+                const selectionContainer = document.getElementById('note-idea-selection');
+                if (data.ideas.length === 0) {
+                    selectionContainer.innerHTML = '<div class="empty-state">Idea カードがありません</div>';
+                } else {
+                    selectionContainer.innerHTML = data.ideas.filter(i => !i.archived).map(idea => `
+                        <div class="idea-option">
+                            <input type="checkbox" name="note-idea-ids" value="${idea.id}"
+                                   ${noteId && data.notes.find(n => n.id === noteId)?.ideaIds.includes(idea.id) ? 'checked' : ''}>
+                            <span>${escapeHtml(idea.title)}</span>
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('note-editor-title').innerText = noteId ? 'ノート編集' : 'ノート作成';
+                document.getElementById('note-editor-modal').classList.add('active');
+            }
+
+            function closeNoteEditor() {
+                document.getElementById('note-editor-modal').classList.remove('active');
+                currentNoteId = null;
+            }
+
+            function saveNote() {
+                const title = document.getElementById('note-title-input').value.trim();
+                const content = document.getElementById('note-content-input').value.trim();
+                const tags = parseTags(document.getElementById('note-tags-input').value);
+
+                const ideaIds = Array.from(document.querySelectorAll('input[name="note-idea-ids"]:checked'))
+                    .map(cb => cb.value);
+
+                if (!title && !content) {
+                    alert('タイトルまたは内容を入力してください');
+                    return;
+                }
+
+                if (currentNoteId) {
+                    // Update existing note
+                    const note = data.notes.find(n => n.id === currentNoteId);
+                    if (note) {
+                        note.title = title;
+                        note.content = content;
+                        note.tags = tags;
+                        note.ideaIds = ideaIds;
+                        note.updatedAt = new Date().toISOString();
+                    }
+                } else {
+                    // Create new note
+                    const note = {
+                        id: generateId('note'),
+                        title: title,
+                        content: content,
+                        tags: tags,
+                        ideaIds: ideaIds,
+                        pinned: false,
+                        archived: false,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    data.notes.push(note);
+                }
+
+                data.updatedAt = new Date().toISOString();
+                closeNoteEditor();
+                renderNotes();
+            }
+
+            function deleteNote(noteId) {
+                if (!confirm('このノートを削除しますか？')) return;
+                data.notes = data.notes.filter(n => n.id !== noteId);
+                data.updatedAt = new Date().toISOString();
+                renderNotes();
+            }
+
+            function renderNotes() {
+                const container = document.getElementById('note-list');
+
+                // Sort by updated date
+                const sortedNotes = [...data.notes].sort((a, b) =>
+                    new Date(b.updatedAt) - new Date(a.updatedAt)
+                );
+
+                if (sortedNotes.length === 0) {
+                    container.innerHTML = '<div class="empty-state">ノートがありません。作成しましょう！</div>';
+                    return;
+                }
+
+                container.innerHTML = sortedNotes.map(note => `
+                    <div class="note-item">
+                        <div>
+                            <div class="note-item-title">${escapeHtml(note.title) || '(無題)'}</div>
+                            <div class="note-item-meta">
+                                更新: ${formatDate(note.updatedAt)} |
+                                関連カード: ${note.ideaIds.length}枚 |
+                                タグ: ${note.tags.map(t => `#${escapeHtml(t)}`).join(' ')}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="app.showNoteEditor('${note.id}')">編集</button>
+                            <button class="danger" onclick="app.deleteNote('${note.id}')">削除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Data management
+            function newProject() {
+                if (!confirm('新規作成しますか？現在のデータは失われます。')) return;
+
+                data = {
+                    version: "1.0.0",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    chats: [],
+                    ideas: [],
+                    notes: []
+                };
+
+                renderChats();
+                renderIdeas();
+                renderNotes();
+            }
+
+            function saveData() {
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nestlite-${new Date().toISOString().split('T')[0]}.nestlite`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function loadData(input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const loaded = JSON.parse(e.target.result);
+
+                        // Basic validation
+                        if (!loaded.version || !Array.isArray(loaded.chats) ||
+                            !Array.isArray(loaded.ideas) || !Array.isArray(loaded.notes)) {
+                            throw new Error('Invalid file format');
+                        }
+
+                        data = loaded;
+                        renderChats();
+                        renderIdeas();
+                        renderNotes();
+                        alert('データを読み込みました');
+                    } catch (err) {
+                        alert('ファイルの読み込みに失敗しました: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+                input.value = ''; // Reset for re-loading same file
+            }
+
+            function exportMarkdown() {
+                let md = '# NestLite Export\n\n';
+                md += `Exported: ${new Date().toISOString()}\n\n`;
+
+                // Export Notes
+                if (data.notes.length > 0) {
+                    md += '## Notes\n\n';
+                    data.notes.forEach(note => {
+                        md += `### ${note.title || 'Untitled'}\n\n`;
+                        if (note.tags.length > 0) {
+                            md += `Tags: ${note.tags.map(t => `#${t}`).join(' ')}\n\n`;
+                        }
+                        md += `${note.content}\n\n`;
+
+                        // Include linked ideas
+                        if (note.ideaIds.length > 0) {
+                            md += '---\n#### Related Ideas\n\n';
+                            note.ideaIds.forEach(ideaId => {
+                                const idea = data.ideas.find(i => i.id === ideaId);
+                                if (idea) {
+                                    md += `##### ${idea.title}\n${idea.content}\n\n`;
+                                }
+                            });
+                            md += '\n';
+                        }
+                    });
+                }
+
+                // Export Ideas
+                if (data.ideas.length > 0) {
+                    md += '## Ideas\n\n';
+                    data.ideas.filter(i => !i.archived).forEach(idea => {
+                        md += `### ${idea.title || 'Untitled'}\n`;
+                        if (idea.tags.length > 0) {
+                            md += `Tags: ${idea.tags.map(t => `#${t}`).join(' ')}\n`;
+                        }
+                        md += `${idea.content}\n\n`;
+                    });
+                }
+
+                // Export Chats
+                if (data.chats.length > 0) {
+                    md += '## Chat History\n\n';
+                    data.chats.forEach(chat => {
+                        md += `- [${formatDate(chat.timestamp)}] ${chat.content.replace(/\n/g, ' ')}\n`;
+                    });
+                }
+
+                const blob = new Blob([md], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nestlite-export-${new Date().toISOString().split('T')[0]}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Helper functions
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function formatDate(isoString) {
+                const date = new Date(isoString);
+                return date.toLocaleString('ja-JP', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // Event listeners
+            document.addEventListener('DOMContentLoaded', function() {
+                // Ctrl+Enter to send chat
+                document.getElementById('chat-input').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        addChatMessage();
+                    }
+                });
+
+                // Initial render
+                renderChats();
+            });
+
+            // Public API
+            return {
+                switchTab,
+                addChatMessage,
+                deleteChatMessage,
+                createIdeaFromChat,
+                renderChats,
+                showIdeaModal,
+                closeIdeaModal,
+                saveIdeaCard,
+                updateIdeaCard,
+                toggleIdeaPin,
+                toggleIdeaArchive,
+                deleteIdeaCard,
+                sendIdeaToNote,
+                renderIdeas,
+                createNoteFromSelectedIdeas,
+                showNoteEditor,
+                closeNoteEditor,
+                saveNote,
+                deleteNote,
+                renderNotes,
+                newProject,
+                saveData,
+                loadData,
+                exportMarkdown
+            };
+        })();
+    </script>
+</body>
+</html>
